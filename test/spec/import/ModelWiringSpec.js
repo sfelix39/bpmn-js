@@ -3,7 +3,10 @@ import {
   inject
 } from 'test/TestHelper';
 
-import { is } from 'lib/util/ModelUtil';
+import {
+  is,
+  getDi
+} from 'lib/util/ModelUtil';
 
 
 describe('import - model wiring', function() {
@@ -82,7 +85,7 @@ describe('import - model wiring', function() {
       var subProcessShape = elementRegistry.get('SubProcess_1');
 
       var subProcess = subProcessShape.businessObject;
-      var subProcessDi = subProcess.di;
+      var subProcessDi = getDi(subProcessShape);
 
       // then
       expect(subProcessDi).to.exist;
@@ -96,11 +99,34 @@ describe('import - model wiring', function() {
       var sequenceFlowElement = elementRegistry.get('SequenceFlow_1');
 
       var sequenceFlow = sequenceFlowElement.businessObject;
-      var sequenceFlowDi = sequenceFlow.di;
+      var sequenceFlowDi = getDi(sequenceFlowElement);
 
       // then
       expect(sequenceFlowDi).to.exist;
       expect(sequenceFlowDi.bpmnElement).to.eql(sequenceFlow);
+    }));
+
+
+    it('should wire label di', inject(function(elementRegistry) {
+
+      // when
+      var eventShape = elementRegistry.get('StartEvent_2');
+      var eventLabel = elementRegistry.get('StartEvent_2_label');
+
+      // assume
+      expect(eventShape).to.exist;
+      expect(eventLabel).to.exist;
+
+      // label relationship wired
+      expect(eventShape.label).to.eql(eventLabel);
+      expect(eventLabel.labelTarget).to.eql(eventShape);
+
+      // moddle relationships wired
+      expect(eventShape.di).to.exist;
+      expect(eventShape.businessObject).to.exist;
+
+      expect(eventShape.di).to.eql(eventLabel.di);
+      expect(eventShape.businessObject).to.eql(eventLabel.businessObject);
     }));
 
   });

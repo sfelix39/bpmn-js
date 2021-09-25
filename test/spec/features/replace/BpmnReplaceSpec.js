@@ -17,7 +17,8 @@ import camundaModdleModule from 'camunda-bpmn-moddle/lib';
 import camundaPackage from 'camunda-bpmn-moddle/resources/camunda.json';
 
 import {
-  is
+  is,
+  getDi
 } from 'lib/util/ModelUtil';
 
 import {
@@ -67,6 +68,24 @@ describe('features/replace - bpmn replace', function() {
 
       expect(newElement).to.exist;
       expect(is(businessObject, 'bpmn:UserTask')).to.be.true;
+    }));
+
+
+    it('Task with new DI', inject(function(elementRegistry, bpmnReplace) {
+
+      // given
+      var task = elementRegistry.get('Task_1');
+      var taskDi = getDi(taskDi);
+      var newElementData = {
+        type: 'bpmn:UserTask'
+      };
+
+      // when
+      var newElement = bpmnReplace.replaceElement(task, newElementData);
+
+      // then
+      expect(newElement).to.exist;
+
     }));
 
 
@@ -1624,6 +1643,24 @@ describe('features/replace - bpmn replace', function() {
 
     beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
 
+    it('should have new di', inject(function(elementRegistry, bpmnReplace) {
+
+      // given
+      var task = elementRegistry.get('Task_1');
+      var di = getDi(task);
+      var newElementData = {
+        type: 'bpmn:UserTask'
+      };
+
+      // when
+      var newElement = bpmnReplace.replaceElement(task, newElementData);
+
+      // then
+      var newDi = getDi(newElement);
+
+      expect(newDi).to.not.equal(di);
+    }));
+
     it('should maintain colors', inject(function(elementRegistry, bpmnReplace, modeling) {
 
       // given
@@ -1640,14 +1677,14 @@ describe('features/replace - bpmn replace', function() {
       var newElement = bpmnReplace.replaceElement(task, newElementData);
 
       // then
-      var businessObject = newElement.businessObject;
+      var di = getDi(newElement);
 
-      expect(businessObject.di.get('background-color')).to.equal(fill);
-      expect(businessObject.di.get('border-color')).to.equal(stroke);
+      expect(di.get('background-color')).to.equal(fill);
+      expect(di.get('border-color')).to.equal(stroke);
 
       // TODO @barmac: remove when we drop bpmn.io properties
-      expect(businessObject.di.fill).to.equal(fill);
-      expect(businessObject.di.stroke).to.equal(stroke);
+      expect(di.fill).to.equal(fill);
+      expect(di.stroke).to.equal(stroke);
     }));
 
   });

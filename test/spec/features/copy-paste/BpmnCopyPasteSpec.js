@@ -24,6 +24,7 @@ import {
 
 import {
   getBusinessObject,
+  getDi,
   is
 } from 'lib/util/ModelUtil';
 
@@ -376,16 +377,57 @@ describe('features/copy-paste', function() {
             return is(element, 'bpmn:Task');
           });
 
-          var taskBo = getBusinessObject(task);
+          var di = getDi(task);
 
-          expect(taskBo.di.get('background-color')).to.equal(fill);
-          expect(taskBo.di.get('border-color')).to.equal(stroke);
+          expect(di.get('background-color')).to.equal(fill);
+          expect(di.get('border-color')).to.equal(stroke);
 
           // TODO @barmac: remove when we drop bpmn.io properties
-          expect(taskBo.di.fill).to.equal(fill);
-          expect(taskBo.di.stroke).to.equal(stroke);
+          expect(di.fill).to.equal(fill);
+          expect(di.stroke).to.equal(stroke);
         })
       );
+
+
+      it('should copy label', inject(
+        function(canvas, copyPaste, elementRegistry, modeling) {
+
+          // given
+          var startEvent = elementRegistry.get('StartEvent_1'),
+              rootElement = canvas.getRootElement();
+
+          copyPaste.copy(startEvent);
+
+          // when
+          var elements = copyPaste.paste({
+            element: rootElement,
+            point: {
+              x: 50,
+              y: 50
+            }
+          });
+
+          // then
+          expect(elements).to.have.length(2);
+
+          var startEventCopy = find(elements, function(element) {
+            return is(element, 'bpmn:StartEvent');
+          });
+
+          var startEventCopyBo = getBusinessObject(startEventCopy);
+          var startEventCopyDi = getDi(startEventCopy);
+          var startEventCopyLabel = startEventCopy.label;
+
+          expect(startEventCopyBo).to.exist;
+          expect(startEventCopyBo.name).to.equal('hello');
+
+          expect(startEventCopyDi).to.exist;
+          expect(startEventCopyLabel).to.exist;
+
+          expect(startEventCopyLabel.di).to.equal(startEventCopyDi);
+          expect(startEventCopyLabel.businessObject).to.equal(startEventCopyBo);
+        }
+      ));
 
 
       it('should copy name property', inject(
@@ -789,7 +831,7 @@ describe('features/copy-paste', function() {
   describe('complex', function() {
 
     // TODO(nikku): drop once legacy PhantomJS is dropped
-    this.timeout(4000);
+    this.timeout(6000);
 
     beforeEach(bootstrapModeler(complexXML, {
       modules: testModules,

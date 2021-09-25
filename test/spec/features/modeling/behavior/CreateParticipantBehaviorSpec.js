@@ -12,6 +12,7 @@ import {
 } from 'diagram-js/lib/util/Elements';
 
 import { asTRBL } from 'diagram-js/lib/layout/LayoutUtil';
+import { getDi } from 'lib/util/ModelUtil';
 
 import {
   createCanvasEvent as canvasEvent
@@ -54,17 +55,17 @@ describe('features/modeling - create participant', function() {
         // given
         process = canvas.getRootElement();
         processBo = process.businessObject;
-        processDi = processBo.di;
+        processDi = getDi(process);
 
-        diRoot = processBo.di.$parent;
+        diRoot = processDi.$parent;
 
         participant = elementFactory.createParticipantShape({ x: 100, y: 100 });
         participantBo = participant.businessObject;
-        participantDi = participantBo.di;
+        participantDi = getDi(participant);
 
         participant2 = elementFactory.createParticipantShape({ x: 100, y: 400 });
         participant2Bo = participant2.businessObject;
-        participant2Di = participant2Bo.di;
+        participant2Di = getDi(participant2);
 
         participants = [ participant, participant2 ];
       }));
@@ -79,7 +80,7 @@ describe('features/modeling - create participant', function() {
 
           collaboration = canvas.getRootElement();
           collaborationBo = collaboration.businessObject;
-          collaborationDi = collaborationBo.di;
+          collaborationDi = getDi(collaboration);
         }));
 
 
@@ -125,7 +126,7 @@ describe('features/modeling - create participant', function() {
 
           collaboration = canvas.getRootElement();
           collaborationBo = collaboration.businessObject;
-          collaborationDi = collaborationBo.di;
+          collaborationDi = getDi(collaboration);
         }));
 
 
@@ -179,19 +180,16 @@ describe('features/modeling - create participant', function() {
       beforeEach(bootstrapModeler(processDiagramXML, { modules: testModules }));
 
       var collaboration,
-          collaborationBo,
           collaborationDi,
           participant,
           process,
-          processBo,
           processDi;
 
       beforeEach(inject(function(canvas, elementFactory, modeling) {
 
         // given
         process = canvas.getRootElement();
-        processBo = process.businessObject;
-        processDi = processBo.di;
+        processDi = getDi(process);
 
         participant = elementFactory.createParticipantShape();
 
@@ -199,8 +197,7 @@ describe('features/modeling - create participant', function() {
         modeling.createShape(participant, { x: 350, y: 200 }, process);
 
         collaboration = canvas.getRootElement();
-        collaborationBo = collaboration.businessObject;
-        collaborationDi = collaborationBo.di;
+        collaborationDi = getDi(collaboration);
       }));
 
 
@@ -210,8 +207,7 @@ describe('features/modeling - create participant', function() {
         expect(collaboration.children).to.have.length(4);
 
         collaboration.children.forEach(function(child) {
-          var childBo = child.businessObject,
-              childDi = childBo.di;
+          var childDi = getDi(child);
 
           expect(childDi.$parent).to.eql(collaborationDi);
           expect(collaborationDi.planeElement).to.include(childDi);
@@ -220,8 +216,7 @@ describe('features/modeling - create participant', function() {
         expect(participant.children).to.have.length(5);
 
         participant.children.forEach(function(child) {
-          var childBo = child.businessObject,
-              childDi = childBo.di;
+          var childDi = getDi(child);
 
           expect(childDi.$parent).to.eql(collaborationDi);
           expect(collaborationDi.planeElement).to.include(childDi);
@@ -237,8 +232,8 @@ describe('features/modeling - create participant', function() {
         expect(process.children).to.have.length(8);
 
         process.children.forEach(function(child) {
-          var childBo = child.businessObject,
-              childDi = childBo.di;
+          var childDi = getDi(child);
+
 
           expect(childDi.$parent).to.eql(processDi);
           expect(processDi.planeElement).to.include(childDi);
@@ -255,8 +250,8 @@ describe('features/modeling - create participant', function() {
 
         // then
         process.children.forEach(function(child) {
-          var childBo = child.businessObject,
-              childDi = childBo.di;
+          var childDi = getDi(child);
+
 
           expect(childDi.$parent).not.to.exist;
           expect(processDi.planeElement).not.to.include(childDi);
@@ -340,7 +335,6 @@ describe('features/modeling - create participant', function() {
       beforeEach(bootstrapModeler(processDiagramXML, { modules: testModules }));
 
       var participant,
-          participantBo,
           process,
           processGfx;
 
@@ -351,7 +345,6 @@ describe('features/modeling - create participant', function() {
         processGfx = canvas.getGraphics(process);
 
         participant = elementFactory.createParticipantShape();
-        participantBo = participant.businessObject;
 
         create.start(canvasEvent({ x: 100, y: 100 }), participant);
 
@@ -362,7 +355,7 @@ describe('features/modeling - create participant', function() {
       it('should fit participant', inject(function(elementFactory) {
 
         // then
-        var defaultSize = elementFactory._getDefaultSize(participantBo);
+        var defaultSize = elementFactory.getDefaultSize(participant);
 
         expect(participant.width).to.equal(defaultSize.width);
         expect(participant.height).to.equal(defaultSize.height);
@@ -428,7 +421,6 @@ describe('features/modeling - create participant', function() {
           var process = canvas.getRootElement(),
               processGfx = canvas.getGraphics(process),
               participant = elementFactory.createParticipantShape(),
-              participantBo = participant.businessObject,
               groupElement = elementFactory.createShape({ type: 'bpmn:Group' });
 
           modeling.createShape(groupElement, { x: 100, y: 100 }, process);
@@ -438,7 +430,7 @@ describe('features/modeling - create participant', function() {
           dragging.hover({ element: process, gfx: processGfx });
 
           // then
-          var defaultSize = elementFactory._getDefaultSize(participantBo);
+          var defaultSize = elementFactory.getDefaultSize(participant);
 
           expect(participant.width).to.equal(defaultSize.width);
           expect(participant.height).to.equal(defaultSize.height);
