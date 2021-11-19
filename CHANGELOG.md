@@ -11,6 +11,21 @@ ___Note:__ Yet to be released changes appear here._
 * Reworked the link of elements to bpmn DIs. You must access the `di` directly from the diagram element instead of the `businessObject`. [#1472](https://github.com/bpmn-io/bpmn-js/issues/1472)
 * Reworked import and `BpmnFactory` APIs. [#1472](https://github.com/bpmn-io/bpmn-js/issues/1472)
 
+## 8.8.2
+
+* `FIX`: properly re-use ID of a copied element if available ([#1503](https://github.com/bpmn-io/bpmn-js/pull/1509))
+
+## 8.8.1
+
+* `FIX`: re-use ID of a copied element if available ([#1503](https://github.com/bpmn-io/bpmn-js/pull/1503))
+* `CHORE`: unbuild circular dependency with `ResizeUtil` ([#1500](https://github.com/bpmn-io/bpmn-js/pull/1500))
+
+## 8.8.0
+
+* `FEAT`: give `keyboard` fine-grained control over which events to handle ([#1493](https://github.com/bpmn-io/bpmn-js/issues/1493))
+* `FIX`: correct keyboard shortcuts not working in direct editing mode ([#1493](https://github.com/bpmn-io/bpmn-js/issues/1493))
+* `DEPS`: update to `diagram-js@7.15`
+
 ## 8.7.3
 
 * `FIX`: convert file to `ES6` module ([#1478](https://github.com/bpmn-io/bpmn-js/pull/1478))
@@ -22,7 +37,7 @@ ___Note:__ Yet to be released changes appear here._
 
 ## 8.7.1
 
-* `FIX`: allow connecting `bpmn:MessageFlow` to `bpmn:CallActivity` ([#1467](https://github.com/bpmn-io/bpmn-js/issues/1467)) 
+* `FIX`: allow connecting `bpmn:MessageFlow` to `bpmn:CallActivity` ([#1467](https://github.com/bpmn-io/bpmn-js/issues/1467))
 * `DEPS`: update to `bpmn-moddle@7.1.2`
 
 ## 8.7.0

@@ -1,0 +1,79 @@
+.bjs-container {
+  --bjs-font-family: Arial, sans-serif;
+}
+
+.djs-container {
+  --breadcrumbs-item-color: var(--color-blue-205-100-50);
+  --breadcrumbs-arrow-color: var(--color-black);
+  --drilldown-fill-color: var(--color-white);
+  --drilldown-background-color: var(--color-blue-205-100-50);
+}
+
+.bjs-breadcrumbs {
+  position: absolute;
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  top: 10px;
+  font-family: var(--bjs-font-family);
+  font-size: 16px;
+  line-height: normal;
+}
+
+.bjs-breadcrumbs-shown .bjs-breadcrumbs {
+  display: flex;
+}
+
+.djs-palette-shown .bjs-breadcrumbs {
+  left: 50px;
+}
+
+.djs-palette-shown.djs-palette-two-column .bjs-breadcrumbs {
+  left: 100px;
+}
+
+.bjs-breadcrumbs li {
+  display: inline-flex;
+  padding-bottom: 5px;
+}
+
+.bjs-breadcrumbs li a {
+  cursor: pointer;
+  color: var(--breadcrumbs-item-color);
+}
+
+.bjs-breadcrumbs li:last-of-type a {
+  color: inherit;
+  cursor: default;
+}
+
+.bjs-breadcrumbs li:not(:first-child)::before {
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /><path d="M0 0h24v24H0z" fill="none" /></svg>');
+  padding: 0 8px;
+  color: var(--breadcrumbs-arrow-color);
+  height: 1em;
+}
+
+.bjs-breadcrumbs .bpmnjs-crumb {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bjs-drilldown {
+  width: 20px;
+  height: 20px;
+
+  padding: 0px;
+  margin-left: -20px;
+
+  cursor: pointer;
+  border: none;
+  border-radius: 2px;
+  outline: none;
+
+  fill: var(--drilldown-fill-color);
+  background-color: var(--drilldown-background-color);
+}

@@ -7,7 +7,7 @@ import {
   importBpmnDiagram
 } from 'lib/import/Importer';
 
-import Viewer from 'lib/Viewer';
+import CoreModule from 'lib/core';
 
 import {
   matches as domMatches
@@ -36,7 +36,7 @@ describe('import - Importer', function() {
   var diagram;
 
   beforeEach(function() {
-    diagram = createDiagram(TestContainer.get(this), Viewer.prototype._modules);
+    diagram = createDiagram(TestContainer.get(this), [CoreModule]);
   });
 
 
@@ -273,6 +273,29 @@ describe('import - Importer', function() {
         // then
         expectChildren(diagram, processShape, correctlyOrdered);
 
+      });
+    });
+
+
+    it('should import DataAssociations in root', function() {
+
+      // given
+      var xml = require('./data-association.bpmn');
+
+      // given
+      var elementRegistry = diagram.get('elementRegistry');
+
+
+      // when
+      return runImport(diagram, xml).then(function() {
+
+        // then
+        var process = elementRegistry.get('Collaboration'),
+            association = elementRegistry.get('DataAssociation'),
+            dataStore = elementRegistry.get('DataStore');
+
+        expect(association.parent).to.eql(process);
+        expect(dataStore.parent).to.eql(process);
       });
     });
 
@@ -665,6 +688,71 @@ describe('import - Importer', function() {
 
   });
 
+
+  describe('Multiple Planes', function() {
+
+    it('should import multiple diagrams', function() {
+
+      // given
+      var xml = require('../../fixtures/bpmn/multiple-diagrams.bpmn');
+
+      // when
+      return runImport(diagram, xml).then(function(result) {
+
+        var warnings = result.warnings;
+
+        // then
+        expect(warnings).to.have.length(0);
+
+        expect(diagram.get('elementRegistry').get('Task_A')).to.exist;
+        expect(diagram.get('elementRegistry').get('Task_B')).to.exist;
+      });
+    });
+
+
+    it('should allow subProcess to have attached plane', function() {
+
+      // given
+      var xml = require('../../fixtures/bpmn/import/collapsed-subprocess.bpmn');
+
+      // when
+      return runImport(diagram, xml).then(function(result) {
+
+        var warnings = result.warnings;
+
+        // then
+        expect(warnings).to.have.length(0);
+
+        expect(diagram.get('elementRegistry').get('Subprocess')).to.exist;
+        expect(diagram.get('elementRegistry').get('Subprocess_plane')).to.exist;
+      });
+    });
+
+
+    it('should render Tasks on different layers', function() {
+
+      // given
+      var xml = require('../../fixtures/bpmn/multiple-diagrams.bpmn');
+
+      // when
+      return runImport(diagram, xml).then(function() {
+
+        var elementRegistry = diagram.get('elementRegistry'),
+            canvas = diagram.get('canvas'),
+            taskA = elementRegistry.get('Task_A'),
+            taskB = elementRegistry.get('Task_B');
+
+        var activePlane = canvas.getActivePlane(),
+            planeA = canvas.findPlane(taskA),
+            planeB = canvas.findPlane(taskB);
+
+        // then
+        expect(activePlane).to.eql(planeA);
+        expect(planeA).to.not.eql(planeB);
+      });
+    });
+
+  });
 });
 
 
