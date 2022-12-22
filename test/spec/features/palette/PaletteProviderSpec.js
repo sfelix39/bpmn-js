@@ -65,7 +65,7 @@ describe('features/palette', function() {
     }));
 
 
-    it('should select start event', inject(function(canvas, dragging, selection) {
+    it('should select sub-process', inject(function(canvas, dragging, selection) {
 
       // given
       var rootElement = canvas.getRootElement(),
@@ -82,8 +82,10 @@ describe('features/palette', function() {
       dragging.end();
 
       // then
-      expect(selection.get()).to.have.length(1);
-      expect(is(selection.get()[0], 'bpmn:StartEvent')).to.be.true;
+      var selected = selection.get();
+
+      expect(selected).to.have.length(1);
+      expect(is(selected[0], 'bpmn:SubProcess')).to.be.true;
     }));
 
   });
@@ -91,9 +93,7 @@ describe('features/palette', function() {
 
   describe('tools', function() {
 
-    // skip on PhantomJS to prevent unwanted <forEach> behaviors
-    // cf. https://github.com/bpmn-io/diagram-js/pull/517
-    (isPhantomJS() ? it.skip : it)('should not fire <move> on globalConnect', inject(
+    it('should not fire <move> on globalConnect', inject(
       function(eventBus) {
 
         // given
@@ -124,8 +124,4 @@ function triggerPaletteEntry(id) {
       entry.action.click(createMoveEvent(0, 0));
     }
   });
-}
-
-function isPhantomJS() {
-  return /PhantomJS/.test(window.navigator.userAgent);
 }

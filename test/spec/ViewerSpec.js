@@ -6,7 +6,7 @@ import ViewerDefaultExport from '../../';
 
 import Viewer from 'lib/Viewer';
 
-import inherits from 'inherits';
+import inherits from 'inherits-browser';
 
 import {
   createViewer
@@ -372,9 +372,7 @@ describe('Viewer', function() {
 
   describe('drill down', function() {
 
-    it('should allow drill down into collapsed sub-process', function() {
-
-      var xml = require('../fixtures/bpmn/collapsed-sub-process.bpmn');
+    function verifyDrilldown(xml) {
 
       return createViewer(container, Viewer, xml).then(function() {
         var drilldown = container.querySelector('.bjs-drilldown');
@@ -393,6 +391,26 @@ describe('Viewer', function() {
         expect(djsContainer.classList.contains('bjs-breadcrumbs-shown')).to.be.true;
       });
 
+    }
+
+    it('should allow drill down into collapsed sub-process', function() {
+      var xml = require('../fixtures/bpmn/collapsed-sub-process.bpmn');
+
+      return verifyDrilldown(xml);
+    });
+
+
+    it('should allow drill down into legacy collapsed sub-process', function() {
+      var xml = require('../fixtures/bpmn/collapsed-sub-process-legacy.bpmn');
+
+      return verifyDrilldown(xml);
+    });
+
+
+    it('should allow drill down into multi-di collapsed sub-process', function() {
+      var xml = require('../fixtures/bpmn/multiple-nested-processes.bpmn');
+
+      return verifyDrilldown(xml);
     });
 
   });
@@ -1414,6 +1432,9 @@ describe('Viewer', function() {
       expect(svg.indexOf('<svg width="100%" height="100%">')).to.equal(-1);
       expect(svg.indexOf('<g class="viewport"')).to.equal(-1);
 
+      // expect svg to not be empty
+      expect(svg.indexOf('<g')).not.to.equal(-1);
+
       var parser = new DOMParser();
       var svgNode = parser.parseFromString(svg, 'image/svg+xml');
 
@@ -1572,7 +1593,7 @@ describe('Viewer', function() {
         // then
         expect(events).to.eql([
           [ 'saveSVG.start', [ ] ],
-          [ 'saveSVG.done', ['error', 'svg' ] ]
+          [ 'saveSVG.done', [ 'error', 'svg' ] ]
         ]);
       });
     });
@@ -1811,7 +1832,7 @@ describe('Viewer', function() {
           // then
           expect(events).to.eql([
             [ 'import.parse.start', [ 'xml' ] ],
-            [ 'import.parse.complete', ['error', 'definitions', 'elementsById', 'references', 'warnings', 'context' ] ],
+            [ 'import.parse.complete', [ 'error', 'definitions', 'elementsById', 'references', 'warnings', 'context' ] ],
             [ 'import.render.start', [ 'definitions' ] ],
             [ 'import.render.complete', [ 'error', 'warnings' ] ],
             [ 'import.done', [ 'error', 'warnings' ] ]
@@ -2479,7 +2500,7 @@ describe('Viewer', function() {
             // then
             expect(events).to.eql([
               [ 'saveSVG.start', [ ] ],
-              [ 'saveSVG.done', ['error', 'svg' ] ]
+              [ 'saveSVG.done', [ 'error', 'svg' ] ]
             ]);
 
             done(err);

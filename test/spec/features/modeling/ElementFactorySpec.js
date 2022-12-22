@@ -11,6 +11,10 @@ import {
   is
 } from '../../../../lib/util/ModelUtil';
 
+import {
+  assign
+} from 'min-dash';
+
 
 describe('features - element factory', function() {
 
@@ -19,6 +23,49 @@ describe('features - element factory', function() {
   var testModules = [ modelingModule, coreModule ];
 
   beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+
+  describe('basics', function() {
+
+    it('should not mutate attrs', inject(function(elementFactory) {
+
+      // given
+      var attrs = {
+        type: 'bpmn:SubProcess',
+        isExpanded: false
+      };
+
+      // when
+      var createAttrs = assign({}, attrs);
+
+      elementFactory.createShape(createAttrs);
+
+      // then
+      expect(createAttrs).to.eql(attrs);
+    }));
+
+
+    it('should not mutate <di> attr', inject(function(elementFactory) {
+
+      // given
+      var attrs = {
+        type: 'bpmn:SubProcess',
+        isExpanded: false,
+        di: {
+          'bioc:stroke': 'red'
+        }
+      };
+
+      // when
+      var createAttrs = assign({}, attrs);
+
+      elementFactory.createShape(createAttrs);
+
+      // then
+      expect(createAttrs).to.eql(attrs);
+    }));
+
+  });
 
 
   describe('create', function() {
@@ -113,6 +160,19 @@ describe('features - element factory', function() {
       expect(function() {
         shape.businessObject.di;
       }).to.throw(/The di is available through the diagram element only./);
+    }));
+
+
+    it('should add collapsed attribute to subprocess', inject(function(elementFactory) {
+
+      // when
+      var subprocess = elementFactory.createShape({
+        type: 'bpmn:SubProcess',
+        isExpanded: false
+      });
+
+      // then
+      expect(subprocess.collapsed).to.be.true;
     }));
 
 

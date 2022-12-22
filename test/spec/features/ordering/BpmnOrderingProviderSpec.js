@@ -167,7 +167,7 @@ describe('features/modeling - ordering', function() {
     it('should stay behind tasks', inject(function() {
 
       // when
-      move(['Task_1', 'Task_2'], { x: 50, y: 0 }, 'SubProcess_1');
+      move([ 'Task_1', 'Task_2' ], { x: 50, y: 0 }, 'SubProcess_1');
 
       // then
       expectZOrder('SubProcess_1', 'Task_1', 'Task_2');
@@ -177,7 +177,7 @@ describe('features/modeling - ordering', function() {
     it('should be in front of tasks if task is not a child', inject(function() {
 
       // when
-      move(['Task_1', 'Task_2'], { x: 200, y: 0 }, 'Root');
+      move([ 'Task_1', 'Task_2' ], { x: 200, y: 0 }, 'Root');
 
       // then
       expectZOrder('Task_1', 'Task_2', 'SubProcess_1');
@@ -206,7 +206,7 @@ describe('features/modeling - ordering', function() {
     it('should stay behind tasks', inject(function() {
 
       // when
-      move(['Task_1', 'Task_2'], { x: 50, y: 0 }, 'Transaction_1');
+      move([ 'Task_1', 'Task_2' ], { x: 50, y: 0 }, 'Transaction_1');
 
       // then
       expectZOrder('Transaction_1', 'Task_1', 'Task_2');
@@ -216,7 +216,7 @@ describe('features/modeling - ordering', function() {
     it('should be in front of tasks if task is not a child', inject(function() {
 
       // when
-      move(['Task_1', 'Task_2'], { x: 200, y: 0 }, 'Root');
+      move([ 'Task_1', 'Task_2' ], { x: 200, y: 0 }, 'Root');
 
       // then
       expectZOrder('Task_1', 'Task_2', 'Transaction_1');
@@ -343,10 +343,52 @@ describe('features/modeling - ordering', function() {
 
     });
 
+
+    describe('inside subprocess', function() {
+
+      var diagramXML = require('./collapsed-subprocess.bpmn');
+
+      beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+
+      describe('should stay always in front', function() {
+
+        it('moving <Group> onto <StartEvent>', inject(function() {
+
+          // when
+          move('Group', { x: 100, y: 0 }, 'StartEvent', false);
+
+          // then
+          expectZOrder('StartEvent', 'Group');
+        }));
+
+
+        it('moving <Group> onto <Task>', inject(function() {
+
+          // when
+          move('Group', { x: 200, y: 50 }, 'Task', false);
+
+          // then
+          expectZOrder('Task', 'Group');
+        }));
+
+
+        it('move <Group> onto <SubProcess>', inject(function() {
+
+          // when
+          move('Group', { x: 400, y: 0 }, 'SubProcess', false);
+
+          // then
+          expectZOrder('SubProcess', 'Group');
+        }));
+
+      });
+    });
+
   });
 
 
-  describe('connections', function() {
+  describe('sequence flows', function() {
 
     var diagramXML = require('./ordering.bpmn');
 
@@ -355,12 +397,62 @@ describe('features/modeling - ordering', function() {
 
     it('should render sequence flows behind tasks', inject(function() {
 
+      // assume
+      expectZOrder('Task', 'BoundaryEvent', 'SequenceFlow');
+
       // when
       var connection = connect('BoundaryEvent', 'Task');
 
       // then
-      expectZOrder(connection, 'Task', 'BoundaryEvent', connection.label);
+      expectZOrder('Task', 'BoundaryEvent', connection, connection.label);
     }));
+
+  });
+
+
+  describe('data associations', function() {
+
+    var diagramXML = require('./data-association.bpmn');
+
+    beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+    it('should render data associations infront of Collaboration', inject(function() {
+
+      // when
+      var connection = connect('DataStore', 'Task_1');
+
+      // then
+      expectZOrder('Collaboration_1', 'DataStore', connection);
+    }));
+
+
+    describe('inside subprocesses', function() {
+
+      it('should render data associations behind other Subprocess', inject(function() {
+
+        // assumne
+        expectZOrder('SubProcess_1', 'SubProcess_2');
+
+        // when
+        var connection = connect('DataReference_1', 'Task_1');
+
+        // then
+        expectZOrder('SubProcess_1', connection, 'SubProcess_2');
+
+      }));
+
+
+      it('should render in collapsed subprocess plane', inject(function() {
+
+        // when
+        var connection = connect('DataReference_2', 'Task_2');
+
+        // then
+        expectZOrder('collapsedSubProcess_plane', 'DataReference_2', connection);
+
+      }));
+
+    });
 
   });
 

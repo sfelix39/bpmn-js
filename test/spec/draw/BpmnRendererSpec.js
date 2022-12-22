@@ -333,7 +333,7 @@ describe('draw - bpmn renderer', function() {
         var svg = canvas._svg;
         var markers = svg.querySelectorAll('marker');
 
-        expect(markers[0].id).to.match(/^sequenceflow-end-white-black-[A-Za-z0-9]+$/);
+        expect(markers[0].id).to.match(/^sequenceflow-end-white-hsl_225_10_15_-[A-Za-z0-9]+$/);
       })();
     });
   });
@@ -484,42 +484,12 @@ describe('draw - bpmn renderer', function() {
         }
       }));
 
-      // TODO(philippfromme): remove once we drop PhantomJS
-      /**
-       * Ensure alpha channel of RGB (rgba) color has one decimal point.
-       *
-       * @param {string} color
-       *
-       * @return {string}
-       */
-      function fixRgba(color) {
-        if (color.indexOf('rgba') !== -1) {
-          return [
-            'rgba(',
-            color
-              .replace(/rgba\(|\)/g, '')
-              .split(',')
-              .map(function(string) {
-                if (string.indexOf('.') !== -1) {
-                  return parseFloat(string).toFixed(1);
-                }
-
-                return parseInt(string);
-              })
-              .join(', '),
-            ')'
-          ].join('');
-        }
-
-        return color;
-      }
-
       function expectFillColor(element, color) {
-        expect(expectedColors(color)).to.include(fixRgba(element.style.fill));
+        expect(expectedColors(color)).to.include(element.style.fill);
       }
 
       function expectStrokeColor(element, color) {
-        expect(expectedColors(color)).to.include(fixRgba(element.style.stroke));
+        expect(expectedColors(color)).to.include(element.style.stroke);
       }
 
       /**
@@ -671,8 +641,13 @@ describe('draw - bpmn renderer', function() {
     it('should expose helpers', inject(function(bpmnRenderer) {
 
       // then
-      expect(bpmnRenderer._drawPath).to.be.a('function');
 
+      // unsafe to use render APIs
+      expect(bpmnRenderer._drawPath).to.be.a('function');
+      expect(bpmnRenderer._renderer).to.be.a('function');
+
+      // very unsafe to use internal state
+      expect(bpmnRenderer.handlers).to.exist;
     }));
 
   });

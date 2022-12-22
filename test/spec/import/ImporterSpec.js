@@ -36,7 +36,7 @@ describe('import - Importer', function() {
   var diagram;
 
   beforeEach(function() {
-    diagram = createDiagram(TestContainer.get(this), [CoreModule]);
+    diagram = createDiagram(TestContainer.get(this), [ CoreModule ]);
   });
 
 
@@ -151,6 +151,12 @@ describe('import - Importer', function() {
           { type: 'add', semantic: 'SequenceFlow_2', di: 'BPMNEdge_SequenceFlow_2', diagramElement: 'SequenceFlow_2' },
           { type: 'add', semantic: 'SequenceFlow_3', di: 'BPMNEdge_SequenceFlow_3', diagramElement: 'SequenceFlow_3' }
         ]);
+
+        expect(
+          diagram.get('canvas').getRootElement()
+        ).to.equal(
+          diagram.get('elementRegistry').get('Process_1')
+        );
       });
     });
 
@@ -186,6 +192,12 @@ describe('import - Importer', function() {
           { type: 'add', semantic: 'Lane_2', di: '_BPMNShape_Lane_3', diagramElement: 'Lane_2' },
           { type: 'add', semantic: 'Lane_3', di: '_BPMNShape_Lane_4', diagramElement: 'Lane_3' }
         ]);
+
+        expect(
+          diagram.get('canvas').getRootElement()
+        ).to.equal(
+          diagram.get('elementRegistry').get('_Collaboration_2')
+        );
       });
 
     });
@@ -246,7 +258,7 @@ describe('import - Importer', function() {
 
   describe('order', function() {
 
-    it('should import sequence flows and lanes behind other flow nodes', function() {
+    it('should import lanes behind other flow nodes', function() {
 
       var xml = require('./sequenceFlow-ordering.bpmn');
 
@@ -262,17 +274,45 @@ describe('import - Importer', function() {
         var children = processShape.children;
 
         // lanes
-        // connections
         // other elements
         var correctlyOrdered = [].concat(
-          children.filter(function(c) { return is(c, 'bpmn:Lane'); }),
-          children.filter(function(c) { return c.waypoints; }),
-          children.filter(function(c) { return !is(c, 'bpmn:Lane') && !c.waypoints; })
+          children.filter(function(e) { return is(e, 'bpmn:Lane'); }),
+          children.filter(function(e) { return !is(e, 'bpmn:Lane'); })
         );
 
         // then
         expectChildren(diagram, processShape, correctlyOrdered);
+      });
+    });
 
+
+    it('should import sequence flows in front of other flow nodes', function() {
+
+      var xml = require('./sequenceFlow-ordering.bpmn');
+
+      // given
+      var elementRegistry = diagram.get('elementRegistry');
+
+
+      return runImport(diagram, xml).then(function() {
+
+        // when
+        var processShape = elementRegistry.get('Participant_1jxpy8o');
+
+        var children = processShape.children;
+
+        // lanes
+        // other elements
+        // connections
+        // labels
+        var correctlyOrdered = [].concat(
+          children.filter(function(e) { return !e.waypoints && !e.labelTarget; }),
+          children.filter(function(e) { return e.waypoints; }),
+          children.filter(function(e) { return e.labelTarget; })
+        );
+
+        // then
+        expectChildren(diagram, processShape, correctlyOrdered);
       });
     });
 
@@ -445,6 +485,11 @@ describe('import - Importer', function() {
           { type: 'add', semantic: 'SequenceFlow_5', di: 'BPMNEdge_SequenceFlow_5', diagramElement: 'SequenceFlow_5' }
         ]);
 
+        expect(
+          diagram.get('canvas').getRootElement()
+        ).to.equal(
+          diagram.get('elementRegistry').get('Process_2')
+        );
       });
     });
 
@@ -689,9 +734,9 @@ describe('import - Importer', function() {
   });
 
 
-  describe('Multiple Planes', function() {
+  describe('multiple bpmndi:BPMNDiagram elements', function() {
 
-    it('should import multiple diagrams', function() {
+    it('should import first bpmndi:BPMNDiagram (default)', function() {
 
       // given
       var xml = require('../../fixtures/bpmn/multiple-diagrams.bpmn');
@@ -704,32 +749,44 @@ describe('import - Importer', function() {
         // then
         expect(warnings).to.have.length(0);
 
-        expect(diagram.get('elementRegistry').get('Task_A')).to.exist;
-        expect(diagram.get('elementRegistry').get('Task_B')).to.exist;
+        diagram.invoke(function(elementRegistry, canvas) {
+
+          expect(elementRegistry.get('Task_A')).to.exist;
+          expect(elementRegistry.get('Task_B')).not.to.exist;
+
+          expect(canvas.getRootElement()).to.equal(elementRegistry.get('Process_1'));
+        });
       });
     });
 
 
-    it('should allow subProcess to have attached plane', function() {
+    it('should import second bpmndi:BPMNDiagram (specified)', function() {
 
       // given
-      var xml = require('../../fixtures/bpmn/import/collapsed-subprocess.bpmn');
+      var xml = require('../../fixtures/bpmn/multiple-diagrams.bpmn');
+
+      var selectedDiagram = 'BpmnDiagram_2';
 
       // when
-      return runImport(diagram, xml).then(function(result) {
+      return runImport(diagram, xml, selectedDiagram).then(function(result) {
 
         var warnings = result.warnings;
 
         // then
         expect(warnings).to.have.length(0);
 
-        expect(diagram.get('elementRegistry').get('Subprocess')).to.exist;
-        expect(diagram.get('elementRegistry').get('Subprocess_plane')).to.exist;
+        diagram.invoke(function(elementRegistry, canvas) {
+
+          expect(elementRegistry.get('Task_A')).not.to.exist;
+          expect(elementRegistry.get('Task_B')).to.exist;
+
+          expect(canvas.getRootElement()).to.equal(elementRegistry.get('Process_2'));
+        });
       });
     });
 
 
-    it('should render Tasks on different layers', function() {
+    it('should add root element for each bpmndi:BPMNDiagram when importing', function() {
 
       // given
       var xml = require('../../fixtures/bpmn/multiple-diagrams.bpmn');
@@ -739,17 +796,170 @@ describe('import - Importer', function() {
 
         var elementRegistry = diagram.get('elementRegistry'),
             canvas = diagram.get('canvas'),
+            rootA = elementRegistry.get('Process_1'),
+            rootB = elementRegistry.get('Process_2'),
             taskA = elementRegistry.get('Task_A'),
             taskB = elementRegistry.get('Task_B');
 
-        var activePlane = canvas.getActivePlane(),
-            planeA = canvas.findPlane(taskA),
-            planeB = canvas.findPlane(taskB);
+        var activeRoot = canvas.getRootElement();
 
         // then
-        expect(activePlane).to.eql(planeA);
-        expect(planeA).to.not.eql(planeB);
+        expect(canvas.findRoot(taskA)).to.equal(rootA);
+        expect(canvas.findRoot(taskB)).to.equal(rootB);
+        expect(activeRoot).to.equal(rootA);
       });
+    });
+
+
+    describe('collapsed sub process', function() {
+
+      it('should import collapsed sub process', function() {
+
+        // given
+        var xml = require('../../fixtures/bpmn/multiple-nested-processes.bpmn');
+
+        var selectedDiagram = 'BpmnDiagram_1';
+
+        // when
+        return runImport(diagram, xml, selectedDiagram).then(function(result) {
+
+          var warnings = result.warnings;
+
+          // then
+          expect(warnings).to.have.length(0);
+
+          diagram.invoke(function(elementRegistry, canvas) {
+
+            expect(elementRegistry.get('SubProcess_1')).to.exist;
+            expect(elementRegistry.get('Task_1A')).to.exist;
+            expect(elementRegistry.get('Task_1B')).to.exist;
+
+            expect(elementRegistry.get('SubProcess_2')).to.not.exist;
+
+            expect(canvas.getRootElement()).to.equal(elementRegistry.get('Process_1'));
+          });
+        });
+      });
+
+
+      it('should import and show collapsed sub process', function() {
+
+        // given
+        var xml = require('../../fixtures/bpmn/multiple-nested-processes.bpmn');
+
+        var selectedDiagram = 'SubProcessDiagram_1';
+
+        // when
+        return runImport(diagram, xml, selectedDiagram).then(function(result) {
+
+          var warnings = result.warnings;
+
+          // then
+          expect(warnings).to.have.length(0);
+
+          diagram.invoke(function(elementRegistry, canvas) {
+
+            expect(elementRegistry.get('SubProcess_1')).to.exist;
+            expect(elementRegistry.get('Task_1A')).to.exist;
+            expect(elementRegistry.get('Task_1B')).to.exist;
+
+            expect(elementRegistry.get('SubProcess_2')).to.not.exist;
+
+            expect(canvas.getRootElement()).to.equal(elementRegistry.get('SubProcess_1_plane'));
+          });
+        });
+      });
+
+
+      it('should import first bpmndi:BPMNDiagram when importing collapsed sub process', function() {
+
+        // given
+        var xml = require('../../fixtures/bpmn/multiple-nested-processes.bpmn');
+
+        var selectedDiagram = 'BpmnDiagram_2';
+
+        // when
+        return runImport(diagram, xml, selectedDiagram).then(function(result) {
+
+          var warnings = result.warnings;
+
+          // then
+          expect(warnings).to.have.length(0);
+
+          diagram.invoke(function(elementRegistry, canvas) {
+
+            expect(elementRegistry.get('SubProcess_2')).to.exist;
+            expect(elementRegistry.get('Task_2A')).to.exist;
+            expect(elementRegistry.get('Task_2B')).to.not.exist;
+
+            expect(elementRegistry.get('SubProcess_1')).to.not.exist;
+
+            expect(canvas.getRootElement()).to.equal(elementRegistry.get('Process_2'));
+          });
+        });
+      });
+
+
+      it('should import specified bpmndi:BPMNDiagram when importing collapsed sub process', function() {
+
+        // given
+        var xml = require('../../fixtures/bpmn/multiple-nested-processes.bpmn');
+
+        var selectedDiagram = 'SubProcess_2_diagram_B';
+
+        // when
+        return runImport(diagram, xml, selectedDiagram).then(function(result) {
+
+          var warnings = result.warnings;
+
+          // then
+          expect(warnings).to.have.length(0);
+
+          diagram.invoke(function(elementRegistry, canvas) {
+
+            expect(elementRegistry.get('SubProcess_2')).to.exist;
+            expect(elementRegistry.get('Task_2A')).to.not.exist;
+            expect(elementRegistry.get('Task_2B')).to.exist;
+
+            expect(elementRegistry.get('SubProcess_1')).to.not.exist;
+
+            expect(canvas.getRootElement()).to.equal(elementRegistry.get('SubProcess_2_plane'));
+          });
+        });
+      });
+
+
+      it('should add root element when importing collapsed sub process', function() {
+
+        // given
+        var xml = require('../../fixtures/bpmn/import/collapsed-subprocess.bpmn');
+
+        // when
+        return runImport(diagram, xml).then(function(result) {
+
+          var warnings = result.warnings;
+
+          // then
+          expect(warnings).to.have.length(0);
+
+          diagram.invoke(function(elementRegistry, canvas) {
+
+            var subProcessRoot = elementRegistry.get('Subprocess_plane');
+            var processRoot = elementRegistry.get('Process_1rjrv55');
+            var subProcessElement = elementRegistry.get('Subprocess');
+            var taskInSubProcessElement = elementRegistry.get('Task_B');
+
+            expect(subProcessRoot).to.exist;
+            expect(subProcessElement).to.exist;
+            expect(taskInSubProcessElement).to.exist;
+
+            expect(canvas.getRootElement()).to.equal(processRoot);
+            expect(subProcessElement.parent).to.equal(processRoot);
+            expect(taskInSubProcessElement.parent).to.equal(subProcessRoot);
+          });
+        });
+      });
+
     });
 
   });
